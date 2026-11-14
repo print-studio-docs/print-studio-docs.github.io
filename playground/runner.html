@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Playground Runner</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+      }
+      .pg-runner__hint {
+        padding: 28px 24px;
+        color: #8a94a6;
+        font:
+          13px/1.7 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          'PingFang SC',
+          'Microsoft YaHei',
+          sans-serif;
+      }
+      .pg-runner__hint strong {
+        color: #4b5b6b;
+      }
+    </style>
+    <!--
+      import map 由引导脚本在首次运行消息时动态注入（此刻尚无模块加载），
+      把用户代码中的裸导入 `@printstack/print-studio` 指向 vendor 聚合产物
+      （真实 dist/lib 构建，非模拟 API），并携带会话级缓存击穿参数。
+    -->
+    <script>
+      window.__pgImportMapReady = false
+      function ensureImportMap(version) {
+        if (window.__pgImportMapReady) return
+        var map = document.createElement('script')
+        map.type = 'importmap'
+        map.textContent = JSON.stringify({
+          imports: {
+            '@printstack/print-studio': './vendor/pg-vendor.js?v=' + (version || '0'),
+          },
+        })
+        document.head.appendChild(map)
+        window.__pgImportMapReady = true
+      }
+    </script>
+  </head>
+  <body>
+    <div class="pg-runner__hint">
+      点击<strong>运行</strong>后，代码输出（模板预览 / 设计器界面）将显示在这里。
+    </div>
+    <!-- 经典脚本引导：接收运行消息、桥接 console、动态导入用户代码。 -->
+    <script>
+      (function () {
+        'use strict'
+
+        var RUNNER_SOURCE = 'runner'
+        var HOST_SOURCE = 'playground'
+
+        function post(message) {
+          message.source = RUNNER_SOURCE
+          parent.postMessage(message, '*')
+        }
+
+        function serialize(value, depth) {
+          depth = depth || 0
+          if (depth > 3) return '…'
+          if (typeof value === 'string') return value
+          if (value instanceof Error) {
+            return value.name + ': ' + value.message + (value.stack ? '\n' + String(value.stack).split('\n').slice(0, 4).join('\n') : '')
+          }
+          if (typeof value === 'function') {
+            return '[Function ' + (value.name || 'anonymous') + ']'
+          }
+          if (typeof value === 'symbol') return value.toString()
+          if (value === null || typeof value !== 'object') return String(value)
+          try {
+            if (Array.isArray(value)) {
+              var head = value
+                .slice(0, 20)
+                .map(function (item) {
+                  return serialize(item, depth + 1)
+                })
+              return '[' + head.join(', ') + (value.length > 20 ? ', …' : '') + ']'
+            }
+            var keys = Object.keys(value).slice(0, 20)
+            var body = keys.map(function (key) {
+              return key + ': ' + serialize(value[key], depth + 1)
+            })
+            return '{ ' + body.join(', ') + ' }'
+          } catch (error) {
+            return String(value)
+          }
+        }
+
+        // console 桥接：转发到宿主控制台面板。
+        ;['log', 'info', 'warn', 'error'].forEach(function (level) {
+          var original = console[level].bind(console)
+          console[level] = function () {
+            var args = Array.prototype.slice.call(arguments)
+            original.apply(null, args)
+            post({
+              type: 'log',
+              level: level,
+              args: args.map(function (item) {
+                return serialize(item)
+              }),
+            })
+          }
+        })
+
+        window.addEventListener('error', function (event) {
+          var location =
+            event.filename && event.lineno
+              ? ' (' + event.filename.split('/').pop() + ':' + event.lineno + ')'
+              : ''
+          post({
+            type: 'log',
+            level: 'error',
+            args: [String(event.message) + location],
+          })
+        })
+
+        window.addEventListener('unhandledrejection', function (event) {
+          post({
+            type: 'log',
+            level: 'error',
+            args: ['未处理的 Promise 拒绝: ' + serialize(event.reason)],
+          })
+        })
+
+        // 把用户文件中的相对导入重写为对应文件的 blob URL，
+        // 使 main.js 可以像本地项目一样 `import './utils.js'`。
+        var resolvedUrls = {}
+
+        function lookupFile(name, files) {
+          if (typeof files[name] === 'string') return name
+          if (typeof files[name + '.js'] === 'string') return name + '.js'
+          if (typeof files[name + '.ts'] === 'string') return name + '.ts'
+          return null
+        }
+
+        function resolveFile(name, files) {
+          if (resolvedUrls[name]) return resolvedUrls[name]
+          var actual = lookupFile(name, files) || name
+          var code = files[actual]
+          if (typeof code !== 'string') {
+            throw new Error('找不到文件: ' + name)
+          }
+          var self = name
+          var rewritten = code.replace(
+            /(from\s*|import\s*\(\s*)(['"])(\.{1,2}\/[^'"]+)\2/g,
+            function (all, prefix, quote, specifier) {
+              var target = normalizePath(self, specifier)
+              return prefix + quote + resolveFile(target, files) + quote
+            },
+          )
+          var url = URL.createObjectURL(
+            new Blob([rewritten], { type: 'text/javascript' }),
+          )
+          resolvedUrls[name] = url
+          return url
+        }
+
+        function normalizePath(fromName, specifier) {
+          var base = fromName.split('/')
+          base.pop()
+          var parts = specifier.split('/')
+          for (var i = 0; i < parts.length; i++) {
+            var part = parts[i]
+            if (part === '.' || part === '') continue
+            if (part === '..') base.pop()
+            else base.push(part)
+          }
+          return base.join('/')
+        }
+
+        var busy = false
+
+        window.addEventListener('message', function (event) {
+          var data = event.data
+          if (
+            !data ||
+            data.source !== HOST_SOURCE ||
+            data.type !== 'run' ||
+            busy
+          ) {
+            return
+          }
+          busy = true
+          resolvedUrls = {}
+          document.body.innerHTML = ''
+          ensureImportMap(data.version)
+          post({ type: 'status', status: 'running' })
+          var files = data.files || {}
+          var entry = files['main.js'] !== undefined ? 'main.js' : 'main.ts'
+          try {
+            var mainUrl = resolveFile(entry, files)
+            // 动态导入用户代码模块；顶层 await 由模块语义天然支持。
+            new Function(
+              'return import(' + JSON.stringify(mainUrl) + ')',
+            )()
+              .then(function () {
+                post({ type: 'status', status: 'done' })
+              })
+              .catch(function (error) {
+                console.error(error)
+                post({ type: 'status', status: 'error' })
+              })
+              .finally(function () {
+                busy = false
+              })
+          } catch (error) {
+            console.error(error)
+            post({ type: 'status', status: 'error' })
+            busy = false
+          }
+        })
+
+        post({ type: 'ready' })
+      })()
+    </script>
+  </body>
+</html>

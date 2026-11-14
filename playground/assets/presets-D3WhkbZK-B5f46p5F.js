@@ -1,0 +1,1 @@
+import{C as e,E as t,M as n,N as r}from"./studio-0nYH2BgY-Ch3ydzBe.js";function i(i={}){return{dataSources:r(i.dataSources??[]),name:n(`core.documentModel.defaultDocumentName`),pages:[t()],templates:[e()],version:`1.0`}}export{i as t};

@@ -1,0 +1,62 @@
+var e=[{path:`print-studio.d.ts`,content:`export { createErrorRuntime } from './components/error-fallback/core';
+export type { ErrorEvent, ErrorRule, ErrorRuntime, } from './components/error-fallback/core';
+export { INITIAL_PARSER_VERSION } from './core/parser-version';
+export type { FontRequest, PrintFont, RenderResources, } from './core/render/fonts';
+export type { DataSource, DataSourceField, ElementNode, PageNode, PageTemplate, PrintDocument, } from './core/types';
+export { PLUGIN_API_VERSION } from './designer/plugins/extension-points';
+export type { ExtensionContribution, ExtensionEntry, ExtensionKind, ExtensionPointDefinition, } from './designer/plugins/extension-points';
+export type { PluginCommand, PluginContext, PluginView, } from './designer/plugins/plugin-context';
+export { createSandboxedPlugin } from './designer/plugins/sandbox-plugin';
+export type { SandboxedPluginOptions } from './designer/plugins/sandbox-plugin';
+export { definePlugin } from './designer/plugins/types';
+export type { LazyPlugin, PluginDefinition, PluginDependency, PluginFunction, PluginInput, PluginManifest, PluginPermission, PluginResources, PluginStatus, } from './designer/plugins/types';
+export { createPluginLocale } from './locales/plugin-locales';
+export type { PluginLocale } from './locales/plugin-locales';
+export { trans } from './locales/runtime';
+export type { HtmlParseOptions, PdfParseOptions, RenderExecutionOptions, } from './parser';
+export type { DocumentParser, ParserRegistry } from './parser/types';
+export { createSaasClient, createSaasPlugin, createSaasTemplateProvider, SaasHttpError, } from './plugins/saas';
+export type * from './plugins/saas';
+export type { BrowserOutputOptions, PreviewHandle, } from './runtime/browser-output';
+export { createPrintStudio } from './studio';
+export type * from './studio-types';
+export type { DesignStudio as PrintStudio } from './studio-types';
+`},{path:`print-studio-core.d.ts`,content:`export { createElement, createPage, createTemplate, deserializeDocument, DOCUMENT_VERSION, } from './document-model';
+export { defineElement, ElementRegistry, elementRegistry, } from './element-registry';
+export type { ElementDefinition, ElementOverflowContext, ElementOverflowResult, } from './element-registry';
+export { DesignerException } from './errors';
+export * from './types';
+`},{path:`print-studio-designer.d.ts`,content:`export { mountPrintDesigner } from './designer/mount-print-designer';
+export type { DesignerPlugin } from './designer/plugins/types';
+export type { DesignerPresets } from './designer/presets';
+export { createRemoteTemplateProvider } from './designer/template-library/remote-provider';
+export type { RemoteTemplateManifest, RemoteTemplateProviderOptions, } from './designer/template-library/remote-provider';
+export type { TemplateLibraryEntry, TemplateLibraryProvider, } from './designer/template-library/types';
+export type { DesignerOptions, MountedPrintDesigner, MountPrintDesignerOptions, StudioMountOptions, } from './designer/types';
+`},{path:`print-studio-runtime.d.ts`,content:`import { ErrorRuntime } from '../components/error-fallback/core';
+import { RuntimeConfigOptions } from '../core/runtime-config';
+import { PrintDocument } from '../core/types';
+import { HtmlParseOptions, PdfParseOptions, RenderExecutionOptions } from '../parser';
+import { BrowserOutputOptions } from './browser-output';
+import { RegistryOptions } from './registries';
+export interface PrintRendererOptions extends RegistryOptions, RuntimeConfigOptions {
+    errors?: ErrorRuntime;
+}
+export declare function createPrintRenderer(options?: PrintRendererOptions): {
+    preview: (template: PrintDocument, data: Record<string, unknown>, outputOptions?: BrowserOutputOptions) => Promise<{
+        warnings: string[];
+        close(): void;
+        element: HTMLIFrameElement;
+    }>;
+    print: (template: PrintDocument, data: Record<string, unknown>, outputOptions?: BrowserOutputOptions) => Promise<{
+        warnings: string[];
+    }>;
+    toHTML: (template: PrintDocument, data: Record<string, unknown>, parseOptions?: HtmlParseOptions, execution?: RenderExecutionOptions) => Promise<import('..').HtmlResult>;
+    toPDF: (template: PrintDocument, data: Record<string, unknown>, parseOptions?: PdfParseOptions, execution?: RenderExecutionOptions) => Promise<import('..').PdfResult>;
+    elements: import('../core').ElementRegistry;
+    parsers: import('..').ParserRegistry;
+    dispose: () => void;
+    errors: ErrorRuntime;
+};
+export type PrintRenderer = ReturnType<typeof createPrintRenderer>;
+`}];export{e as libDeclarations};
