@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 580" role="img" aria-labelledby="title desc">
+  <title id="title">设计器区域示意</title>
+  <desc id="desc">上方菜单栏和工具选项栏，左侧工具栏，中间画布和页面，右侧页面、图层、属性面板，底部信息栏。</desc>
+  <rect width="1000" height="580" rx="14" fill="#f1f5f9"/>
+  <g font-family="system-ui, sans-serif" font-size="18" text-anchor="middle" fill="#12314b">
+    <rect x="12" y="12" width="976" height="44" rx="6" fill="#bfdbfe"/>
+    <text x="500" y="41">① 菜单栏：文件、编辑、页面、排版、数据、视图、导出、帮助</text>
+    <rect x="12" y="64" width="976" height="40" rx="6" fill="#dbeafe"/>
+    <text x="500" y="91">② 工具选项栏：当前工具与编辑选项</text>
+    <rect x="12" y="112" width="80" height="410" rx="6" fill="#bfdbfe"/>
+    <text x="52" y="158">③</text><text x="52" y="202">工具栏</text><text x="52" y="260">选择</text><text x="52" y="300">抓手</text><text x="52" y="340">元素</text>
+    <rect x="104" y="112" width="608" height="410" rx="6" fill="#e2e8f0"/>
+    <text x="408" y="145">④ 画布：标尺、参考线、平移与缩放</text>
+    <rect x="268" y="165" width="280" height="335" fill="white" stroke="#94a3b8"/>
+    <text x="408" y="204">页面（打印范围）</text>
+    <rect x="295" y="230" width="226" height="65" fill="#eff6ff" stroke="#2563eb" stroke-dasharray="5 4"/>
+    <text x="408" y="271">选中元素与选择框</text>
+    <text x="408" y="370" font-size="15">参考线和选择框不参与打印</text>
+    <rect x="724" y="112" width="264" height="120" rx="6" fill="#dbeafe"/>
+    <text x="856" y="160">⑤ 页面 / 图层面板</text><text x="856" y="196" font-size="15">页面切换、元素顺序和显隐</text>
+    <rect x="724" y="244" width="264" height="278" rx="6" fill="#bfdbfe"/>
+    <text x="856" y="296">⑥ 属性面板</text><text x="856" y="346" font-size="16">位置、尺寸、旋转</text><text x="856" y="386" font-size="16">元素内容与数据绑定</text><text x="856" y="456" font-size="15">元素设置复用相同字段</text>
+    <rect x="12" y="534" width="976" height="34" rx="6" fill="#dbeafe"/>
+    <text x="500" y="558" font-size="16">⑦ 信息栏：坐标、选区尺寸、页码与画布缩放</text>
+  </g>
+</svg>
